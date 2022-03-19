@@ -1,22 +1,5 @@
-import sys
-import os
-import collections
 import random
-
-class KnapsackItem:
-    
-    STATIC_ID = 0
-
-    def increase_id(cls):
-        cls.STATIC_ID += 1
-
-    def __init__(self, value:int, cost:int):
-
-        KnapsackItem.increase_id(KnapsackItem)
-        self.id = self.STATIC_ID
-
-        self.value = value
-        self.cost = cost
+from knapsack_item import *
 
 
 class StackItem:
@@ -71,12 +54,15 @@ class Knapsack:
 
         selected_items = dict()
 
+        cost = 0
         prev_item = last_item
         while prev_item is not None:
             prev_item, current_item = prev_item
             selected_items[current_item.id] = current_item
+            cost += current_item.cost
 
-        return max_value, selected_items
+
+        return max_value, cost, selected_items
 
 
     def __search_stack(self, stack:list):
@@ -149,12 +135,14 @@ class Knapsack:
         max_value, last_item = result
         selected_items = dict()
 
+        cost = 0
         prev_item = last_item
         while prev_item is not None:
             prev_item, current_item = prev_item
             selected_items[current_item.id] = current_item
+            cost += current_item.cost
 
-        return max_value, selected_items
+        return max_value, cost, selected_items
 
 
 
@@ -162,22 +150,18 @@ def test_case(n_items, value_range, cost_range, max_cost):
 
     print('------------------------------------------------------------')
 
-    items = dict()
+    items = generate_knapsack_items(n_items, value_range, cost_range)
 
-    for i in range(n_items):
-        item = KnapsackItem(
-            value = random.randint(value_range[0], value_range[1]),
-            cost = random.randint(cost_range[0], cost_range[1]))
-        items[item.id] = item
-
+    '''
     for id in sorted(items.keys()):
         item = items[id]
         print('({}, {}, {})'.format(id, item.value, item.cost), end=' ')
     print()
+    '''
 
     model = Knapsack(items)
     
-    total_value_1, selected_items_1 = model.optimized_solution_of_stack_mode(max_cost=max_cost)
+    total_value_1, cost_1, selected_items_1 = model.optimized_solution_of_stack_mode(max_cost=max_cost)
 
     total_value_to_verify = 0
 
@@ -188,36 +172,26 @@ def test_case(n_items, value_range, cost_range, max_cost):
 
     print()
     print('total value:          ', total_value_1)
-    print('total value to verify:', total_value_to_verify)
-
-    binary_answer = []
+    print('total cost:           ', cost_1)
     
-    for i in range(1, n_items + 1):
-        if i in selected_items_1:
-            binary_answer.append(1)
-        else:
-            binary_answer.append(0)
-
-    print(binary_answer)
+    print_items(selected_items_1)
+    print_selected_items_in_binary_mode(items, selected_items_1)
 
 
 
 def cross_test_case(n_items, value_range, cost_range, max_cost):
 
-    items = dict()
+    print('------------------------------------------------------------')
 
-    for i in range(n_items):
-        item = KnapsackItem(
-            value = random.randint(value_range[0], value_range[1]),
-            cost = random.randint(cost_range[0], cost_range[1]))
-        items[item.id] = item
+    items = generate_knapsack_items(n_items, value_range, cost_range)
 
     model = Knapsack(items)
     
-    total_value_1, selected_items_1 = model.optimized_solution_of_stack_mode(max_cost=max_cost)
-    total_value_2, selected_items_2 = model.optimized_solution_recursive(max_cost=max_cost)
+    total_value_1, total_cost_1, selected_items_1 = model.optimized_solution_of_stack_mode(max_cost=max_cost)
+    total_value_2, total_cost_2, selected_items_2 = model.optimized_solution_recursive(max_cost=max_cost)
 
     assert(total_value_1 == total_value_2)
+    assert(total_cost_1 == total_cost_2)
     assert(len(selected_items_1) == len(selected_items_2))
 
     for id in selected_items_1.keys():
@@ -232,17 +206,13 @@ def cross_test_case(n_items, value_range, cost_range, max_cost):
 
     print()
     print('total value:          ', total_value_1)
-    print('total value to verify:', total_value_to_verify)
+    print('total cost:           ', total_cost_1)
 
-    binary_answer = []
-    
-    for i in range(1, n_items + 1):
-        if i in selected_items_1:
-            binary_answer.append(1)
-        else:
-            binary_answer.append(0)
+    total_value, total_cost = print_items(selected_items_1)
+    print_selected_items_in_binary_mode(items, selected_items_1)
 
-    print(binary_answer)
+    assert(total_value == total_value_1)
+    assert(total_cost == total_cost_1)
 
 
 
@@ -251,15 +221,15 @@ if __name__ == "__main__":
     random.seed(10)
 
     for i in range(10):
-        test_case(8, (1, 10), (1, 10), 2)
+        test_case(8, (1, 32), (1, 32), 128)
         KnapsackItem.STATIC_ID = 0
 
     for i in range(100):
-        cross_test_case(100, (1, 20), (1, 20), 200)
+        cross_test_case(100, (1, 32), (1, 32), 512)
         KnapsackItem.STATIC_ID = 0
 
     for i in range(10):
-        test_case(1200, (1, 50), (1, 50), 50)
+        test_case(1200, (1, 50), (1, 50), 256)
         KnapsackItem.STATIC_ID = 0
 
     
