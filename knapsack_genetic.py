@@ -167,8 +167,8 @@ class KnapsackGenetic:
             gen_code_len = len(self.all_items)
             cross_point = random.randrange(1, gen_code_len)
 
-            new_ge_code_a = (mate_a.genetic_code[:cross_point] + mate_b.genetic_code[cross_point:]).copy()
-            new_ge_code_b = (mate_b.genetic_code[:cross_point] + mate_a.genetic_code[cross_point:]).copy()
+            new_ge_code_a = mate_a.genetic_code[:cross_point] + mate_b.genetic_code[cross_point:]
+            new_ge_code_b = mate_b.genetic_code[:cross_point] + mate_a.genetic_code[cross_point:]
 
             new_mate_a = Individual(self.all_items, new_ge_code_a, self.max_cost)
             new_mate_b = Individual(self.all_items, new_ge_code_b, self.max_cost)
